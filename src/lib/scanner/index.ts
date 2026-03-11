@@ -78,6 +78,9 @@ export async function runScan(
 
     await resilientGoto(page, url, timeout, 8000);
 
+    // Use the final URL after redirects (e.g. language/geo redirects)
+    const finalUrl = page.url();
+
     onProgress?.('scanning_pre_consent', 25, 'progress.step.waitingTags');
     await page.waitForTimeout(waitAfterLoad);
 
@@ -234,7 +237,7 @@ export async function runScan(
 
     const results: ScanResults = {
       scanId,
-      url,
+      url: finalUrl,
       scannedAt: new Date().toISOString(),
       duration: Date.now() - startedAt,
       screenshot,
