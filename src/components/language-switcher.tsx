@@ -17,14 +17,14 @@ export function LanguageSwitcher() {
         <button
           key={opt.value}
           onClick={() => setLocale(opt.value)}
-          className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
             locale === opt.value
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           }`}
           aria-label={`Switch to ${opt.label}`}
         >
-          <span>{opt.flag}</span>
+          <span className="text-base">{opt.flag}</span>
           <span>{opt.label}</span>
         </button>
       ))}

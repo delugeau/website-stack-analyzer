@@ -17,8 +17,8 @@ export const translations = {
     en: 'CMP, GTM, pixels, tags — get a complete report in seconds.',
   },
   'home.placeholder': {
-    fr: 'https://example.com',
-    en: 'https://example.com',
+    fr: 'https://www.example.com',
+    en: 'https://www.example.com',
   },
   'home.analyze': {
     fr: 'Analyser',
