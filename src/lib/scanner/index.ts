@@ -12,8 +12,15 @@ import { analyzeResults } from '../analysis';
 import type { ScanOptions, ScanResults, ScanStatus, PassResults } from '../types/scan';
 import type { CapturedRequest } from '../types/network';
 
-const DEFAULT_WAIT_AFTER_LOAD = 5000;
-const DEFAULT_TIMEOUT = 60000;
+const isServerless = !!(
+  process.env.NETLIFY ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT
+);
+
+const DEFAULT_WAIT_AFTER_LOAD = isServerless ? 2000 : 5000;
+const DEFAULT_TIMEOUT = isServerless ? 15000 : 60000;
+const WAIT_BEFORE_RELOAD = isServerless ? 1000 : 3000;
 
 /**
  * Resilient page navigation: tries `networkidle` first, falls back to
@@ -154,7 +161,7 @@ export async function runScan(
     const postConsentCapture = new NetworkCapture();
 
     // Wait for dynamic tag firing after consent
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(WAIT_BEFORE_RELOAD);
 
     // Clear and re-attach for fresh capture
     postConsentCapture.attach(page);

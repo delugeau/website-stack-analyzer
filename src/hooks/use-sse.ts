@@ -75,7 +75,15 @@ export function useSSE(scanId: string | null, scanUrl: string | null): SSEState 
     });
 
     es.onerror = () => {
-      setState((prev) => ({ ...prev, isConnected: false }));
+      setState((prev) => {
+        if (prev.status === 'completed' || prev.status === 'error') return prev;
+        return {
+          ...prev,
+          status: 'error',
+          error: 'Connection lost. The scan may have timed out.',
+          isConnected: false,
+        };
+      });
       es.close();
     };
 
