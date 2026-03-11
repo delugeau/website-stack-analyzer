@@ -3,6 +3,3 @@
 
 [build.environment]
   PLAYWRIGHT_BROWSERS_PATH = "0"
-
-[functions]
-  included_files = ["node_modules/playwright-core/.local-browsers/**"]
