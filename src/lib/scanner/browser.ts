@@ -1,4 +1,4 @@
-import { chromium, type Browser, type BrowserContext } from 'playwright';
+import type { Browser, BrowserContext } from 'playwright';
 import type { ScanOptions } from '../types/scan';
 
 const REALISTIC_USER_AGENT =
@@ -7,8 +7,16 @@ const REALISTIC_USER_AGENT =
 export class BrowserManager {
   private browser: Browser | null = null;
 
+  private async getChromium() {
+    // Netlify functions need the browser stored with the app bundle, not in ~/.cache.
+    process.env.PLAYWRIGHT_BROWSERS_PATH ??= '0';
+    const { chromium } = await import('playwright');
+    return chromium;
+  }
+
   async getBrowser(): Promise<Browser> {
     if (!this.browser || !this.browser.isConnected()) {
+      const chromium = await this.getChromium();
       this.browser = await chromium.launch({
         headless: true,
         args: [
