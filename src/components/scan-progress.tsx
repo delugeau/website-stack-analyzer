@@ -12,6 +12,7 @@ interface ScanProgressProps {
 
 export function ScanProgress({ status, progress, currentStep, error }: ScanProgressProps) {
   const { t } = useLocale();
+  const stepLabel = currentStep.startsWith('progress.') ? t(currentStep as Parameters<typeof t>[0]) : currentStep;
 
   if (status === 'error') {
     return (
@@ -27,7 +28,7 @@ export function ScanProgress({ status, progress, currentStep, error }: ScanProgr
     <div id="scan-progress-panel" className="rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
       <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
       <h3 className="mt-4 text-lg font-semibold">{t('progress.scanning')}</h3>
-      <p className="mt-2 text-sm text-gray-600">{currentStep}</p>
+      <p className="mt-2 text-sm text-gray-600">{stepLabel}</p>
       <div className="mt-6">
         <div className="mx-auto h-2 max-w-md overflow-hidden rounded-full bg-gray-200">
           <div

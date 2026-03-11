@@ -67,32 +67,32 @@ export async function runScan(
   let context;
   try {
     // Phase 1: Browser setup
-    onProgress?.('scanning_pre_consent', 5, 'Launching browser...');
+    onProgress?.('scanning_pre_consent', 5, 'progress.step.launching');
     context = await browserManager.createContext(options);
     const page = await context.newPage();
 
     // Phase 2: Pre-consent scan
-    onProgress?.('scanning_pre_consent', 10, 'Navigating to URL...');
+    onProgress?.('scanning_pre_consent', 10, 'progress.step.navigating');
     const preConsentCapture = new NetworkCapture();
     preConsentCapture.attach(page);
 
     await resilientGoto(page, url, timeout, 8000);
 
-    onProgress?.('scanning_pre_consent', 25, 'Waiting for late-firing tags...');
+    onProgress?.('scanning_pre_consent', 25, 'progress.step.waitingTags');
     await page.waitForTimeout(waitAfterLoad);
 
     // Snapshot pre-consent state
-    onProgress?.('scanning_pre_consent', 35, 'Capturing pre-consent state...');
+    onProgress?.('scanning_pre_consent', 35, 'progress.step.capturingPre');
     const preConsentRequests = preConsentCapture.snapshot();
     const preConsentCookies = await collectCookies(page);
     const preConsentDataLayer = await getDataLayer(page);
 
     // Detect CMP
-    onProgress?.('detecting_cmp', 40, 'Detecting CMP...');
+    onProgress?.('detecting_cmp', 40, 'progress.step.detectingCmp');
     const cmpResult = await detectCMP(page);
 
     // Detect GTM
-    onProgress?.('detecting_cmp', 45, 'Detecting GTM...');
+    onProgress?.('detecting_cmp', 45, 'progress.step.detectingGtm');
     const gtmResult = await detectGTM(page, preConsentRequests as CapturedRequest[]);
 
     // Classify pre-consent requests
@@ -147,11 +147,11 @@ export async function runScan(
     };
 
     // Phase 3: Accept consent
-    onProgress?.('accepting_consent', 50, 'Accepting consent...');
+    onProgress?.('accepting_consent', 50, 'progress.step.accepting');
     const consentResult = await handleConsent(page);
 
     // Phase 4: Post-consent scan
-    onProgress?.('scanning_post_consent', 60, 'Reloading page after consent...');
+    onProgress?.('scanning_post_consent', 60, 'progress.step.reloading');
     const postConsentCapture = new NetworkCapture();
 
     // Wait for dynamic tag firing after consent
@@ -163,7 +163,7 @@ export async function runScan(
     // Reload page to capture full post-consent behavior
     await resilientReload(page, timeout, 8000);
 
-    onProgress?.('scanning_post_consent', 75, 'Waiting for post-consent tags...');
+    onProgress?.('scanning_post_consent', 75, 'progress.step.waitingPostTags');
     await page.waitForTimeout(waitAfterLoad);
 
     // Capture screenshot after consent (CMP banner is dismissed)
@@ -176,7 +176,7 @@ export async function runScan(
     }
 
     // Snapshot post-consent state
-    onProgress?.('scanning_post_consent', 85, 'Capturing post-consent state...');
+    onProgress?.('scanning_post_consent', 85, 'progress.step.capturingPost');
     const postConsentRequests = postConsentCapture.snapshot();
     const postConsentCookies = await collectCookies(page);
     const postConsentDataLayer = await getDataLayer(page);
@@ -226,7 +226,7 @@ export async function runScan(
     }
 
     // Phase 5: Analysis
-    onProgress?.('analyzing', 90, 'Analyzing results...');
+    onProgress?.('analyzing', 90, 'progress.step.analyzing');
     const analysis = analyzeResults(preConsent, postConsent, {
       pianoConsentModePre,
       pianoConsentModePost,

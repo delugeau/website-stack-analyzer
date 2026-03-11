@@ -6,9 +6,9 @@ import type { Locale } from '@/lib/i18n/translations';
 export function LanguageSwitcher() {
   const { locale, setLocale } = useLocale();
 
-  const options: { value: Locale; label: string; flag: string }[] = [
-    { value: 'fr', label: 'FR', flag: '🇫🇷' },
-    { value: 'en', label: 'EN', flag: '🇬🇧' },
+  const options: { value: Locale; label: string; flagCode: string }[] = [
+    { value: 'fr', label: 'FR', flagCode: 'fr' },
+    { value: 'en', label: 'EN', flagCode: 'gb' },
   ];
 
   return (
@@ -24,7 +24,13 @@ export function LanguageSwitcher() {
           }`}
           aria-label={`Switch to ${opt.label}`}
         >
-          <span className="text-base">{opt.flag}</span>
+          <img
+            src={`https://flagcdn.com/20x15/${opt.flagCode}.png`}
+            width={20}
+            height={15}
+            alt={opt.label}
+            className="rounded-sm"
+          />
           <span>{opt.label}</span>
         </button>
       ))}

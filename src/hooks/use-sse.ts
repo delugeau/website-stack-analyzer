@@ -16,7 +16,7 @@ export function useSSE(scanId: string | null, scanUrl: string | null): SSEState 
   const [state, setState] = useState<SSEState>({
     status: 'queued',
     progress: 0,
-    currentStep: 'Waiting...',
+    currentStep: 'progress.step.queued',
     results: null,
     error: null,
     isConnected: false,

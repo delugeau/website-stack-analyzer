@@ -30,7 +30,7 @@ export async function GET(
         }
       }
 
-      send('progress', { status: 'scanning_pre_consent', progress: 0, currentStep: 'Starting scan...' });
+      send('progress', { status: 'scanning_pre_consent', progress: 0, currentStep: 'progress.step.starting' });
 
       try {
         const results = await runScan(

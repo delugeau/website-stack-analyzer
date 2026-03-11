@@ -94,6 +94,62 @@ export const translations = {
     fr: 'Analyse',
     en: 'Analysis',
   },
+  'progress.step.queued': {
+    fr: 'En attente...',
+    en: 'Waiting...',
+  },
+  'progress.step.starting': {
+    fr: 'Démarrage du scan...',
+    en: 'Starting scan...',
+  },
+  'progress.step.launching': {
+    fr: 'Lancement du navigateur...',
+    en: 'Launching browser...',
+  },
+  'progress.step.navigating': {
+    fr: 'Navigation vers la page...',
+    en: 'Navigating to URL...',
+  },
+  'progress.step.waitingTags': {
+    fr: 'Attente des tags tardifs...',
+    en: 'Waiting for late-firing tags...',
+  },
+  'progress.step.capturingPre': {
+    fr: 'Capture état avant consentement...',
+    en: 'Capturing pre-consent state...',
+  },
+  'progress.step.detectingCmp': {
+    fr: 'Détection de la CMP...',
+    en: 'Detecting CMP...',
+  },
+  'progress.step.detectingGtm': {
+    fr: 'Détection de GTM...',
+    en: 'Detecting GTM...',
+  },
+  'progress.step.accepting': {
+    fr: 'Acceptation du consentement...',
+    en: 'Accepting consent...',
+  },
+  'progress.step.reloading': {
+    fr: 'Rechargement après consentement...',
+    en: 'Reloading page after consent...',
+  },
+  'progress.step.waitingPostTags': {
+    fr: 'Attente des tags post-consentement...',
+    en: 'Waiting for post-consent tags...',
+  },
+  'progress.step.capturingPost': {
+    fr: 'Capture état post-consentement...',
+    en: 'Capturing post-consent state...',
+  },
+  'progress.step.analyzing': {
+    fr: 'Analyse des résultats...',
+    en: 'Analyzing results...',
+  },
+  'progress.step.completed': {
+    fr: 'Terminé',
+    en: 'Completed',
+  },
 
   // ─── Scan Results Page ──────────────────────────
   'results.back': {
