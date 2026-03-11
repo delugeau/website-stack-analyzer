@@ -32,7 +32,7 @@ export default function HomePage() {
       }
 
       const data = await response.json();
-      router.push(`/scan/${data.scanId}`);
+      router.push(`/scan/${data.scanId}?url=${encodeURIComponent(data.url)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

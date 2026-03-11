@@ -12,7 +12,7 @@ interface SSEState {
   isConnected: boolean;
 }
 
-export function useSSE(scanId: string | null): SSEState {
+export function useSSE(scanId: string | null, scanUrl: string | null): SSEState {
   const [state, setState] = useState<SSEState>({
     status: 'queued',
     progress: 0,
@@ -25,9 +25,10 @@ export function useSSE(scanId: string | null): SSEState {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    if (!scanId) return;
+    if (!scanId || !scanUrl) return;
 
-    const es = new EventSource(`/api/scan/${scanId}/stream`);
+    const streamUrl = `/api/scan/${scanId}/stream?url=${encodeURIComponent(scanUrl)}`;
+    const es = new EventSource(streamUrl);
     eventSourceRef.current = es;
 
     setState((prev) => ({ ...prev, isConnected: true }));
@@ -82,7 +83,7 @@ export function useSSE(scanId: string | null): SSEState {
       es.close();
       eventSourceRef.current = null;
     };
-  }, [scanId]);
+  }, [scanId, scanUrl]);
 
   return state;
 }

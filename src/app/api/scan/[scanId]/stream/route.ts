@@ -1,86 +1,57 @@
 import { NextRequest } from 'next/server';
-import { scanStore } from '@/lib/store/scan-store';
+import { runScan } from '@/lib/scanner';
+import type { ScanStatus } from '@/lib/types/scan';
+
+// Allow up to 25 seconds on platforms that support maxDuration (e.g. Vercel)
+export const maxDuration = 25;
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ scanId: string }> }
 ) {
   const { scanId } = await params;
+  const url = request.nextUrl.searchParams.get('url');
 
-  const scan = scanStore.get(scanId);
-  if (!scan) {
-    return new Response('Scan not found', { status: 404 });
+  if (!url) {
+    return new Response('Missing url parameter', { status: 400 });
   }
 
+  const encoder = new TextEncoder();
+
   const stream = new ReadableStream({
-    start(controller) {
-      const encoder = new TextEncoder();
-
+    async start(controller) {
       function send(event: string, data: unknown) {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
-      }
-
-      // Send current state immediately
-      send('progress', {
-        status: scan.status,
-        progress: scan.progress,
-        currentStep: scan.currentStep,
-      });
-
-      // If already completed, send results and close
-      if (scan.status === 'completed') {
-        send('complete', { results: scan.results });
-        controller.close();
-        return;
-      }
-
-      if (scan.status === 'error') {
-        send('error', { message: scan.error });
-        controller.close();
-        return;
-      }
-
-      // Listen for progress updates
-      const onProgress = (data: { status: string; progress: number; currentStep: string }) => {
         try {
-          send('progress', data);
-        } catch {
-          cleanup();
-        }
-      };
-
-      const onComplete = (results: unknown) => {
-        try {
-          send('complete', { results });
-          controller.close();
+          controller.enqueue(
+            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+          );
         } catch {
           // Stream already closed
         }
-        cleanup();
-      };
-
-      const onError = (message: string) => {
-        try {
-          send('error', { message });
-          controller.close();
-        } catch {
-          // Stream already closed
-        }
-        cleanup();
-      };
-
-      function cleanup() {
-        scanStore.removeListener(`progress:${scanId}`, onProgress);
-        scanStore.removeListener(`complete:${scanId}`, onComplete);
-        scanStore.removeListener(`error:${scanId}`, onError);
       }
 
-      scanStore.on(`progress:${scanId}`, onProgress);
-      scanStore.on(`complete:${scanId}`, onComplete);
-      scanStore.on(`error:${scanId}`, onError);
+      send('progress', { status: 'scanning_pre_consent', progress: 0, currentStep: 'Starting scan...' });
 
-      // Cleanup on abort
-      _request.signal.addEventListener('abort', cleanup);
+      try {
+        const results = await runScan(
+          scanId,
+          url,
+          undefined,
+          (status: ScanStatus, progress: number, currentStep: string) => {
+            send('progress', { status, progress, currentStep });
+          }
+        );
+        send('complete', { results });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error occurred';
+        send('error', { message });
+      } finally {
+        try {
+          controller.close();
+        } catch {
+          // Already closed
+        }
+      }
     },
   });
 

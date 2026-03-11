@@ -9,8 +9,7 @@ import { detectGTM } from './gtm-detector';
 import { detectCMP } from '../cmp';
 import { classifyAllRequests } from '../providers';
 import { analyzeResults } from '../analysis';
-import { scanStore } from '../store/scan-store';
-import type { ScanOptions, ScanResults, PassResults } from '../types/scan';
+import type { ScanOptions, ScanResults, ScanStatus, PassResults } from '../types/scan';
 import type { CapturedRequest } from '../types/network';
 
 const DEFAULT_WAIT_AFTER_LOAD = 5000;
@@ -54,39 +53,45 @@ async function resilientReload(page: Page, timeout: number, extraWait: number): 
   }
 }
 
-export async function runScan(scanId: string, url: string, options?: ScanOptions): Promise<void> {
+export async function runScan(
+  scanId: string,
+  url: string,
+  options?: ScanOptions,
+  onProgress?: (status: ScanStatus, progress: number, currentStep: string) => void
+): Promise<ScanResults> {
   const timeout = options?.timeout || DEFAULT_TIMEOUT;
   const waitAfterLoad = options?.waitAfterLoad || DEFAULT_WAIT_AFTER_LOAD;
+  const startedAt = Date.now();
 
   let context;
   try {
     // Phase 1: Browser setup
-    scanStore.updateProgress(scanId, 'scanning_pre_consent', 5, 'Launching browser...');
+    onProgress?.('scanning_pre_consent', 5, 'Launching browser...');
     context = await browserManager.createContext(options);
     const page = await context.newPage();
 
     // Phase 2: Pre-consent scan
-    scanStore.updateProgress(scanId, 'scanning_pre_consent', 10, 'Navigating to URL...');
+    onProgress?.('scanning_pre_consent', 10, 'Navigating to URL...');
     const preConsentCapture = new NetworkCapture();
     preConsentCapture.attach(page);
 
     await resilientGoto(page, url, timeout, 8000);
 
-    scanStore.updateProgress(scanId, 'scanning_pre_consent', 25, 'Waiting for late-firing tags...');
+    onProgress?.('scanning_pre_consent', 25, 'Waiting for late-firing tags...');
     await page.waitForTimeout(waitAfterLoad);
 
     // Snapshot pre-consent state
-    scanStore.updateProgress(scanId, 'scanning_pre_consent', 35, 'Capturing pre-consent state...');
+    onProgress?.('scanning_pre_consent', 35, 'Capturing pre-consent state...');
     const preConsentRequests = preConsentCapture.snapshot();
     const preConsentCookies = await collectCookies(page);
     const preConsentDataLayer = await getDataLayer(page);
 
     // Detect CMP
-    scanStore.updateProgress(scanId, 'detecting_cmp', 40, 'Detecting CMP...');
+    onProgress?.('detecting_cmp', 40, 'Detecting CMP...');
     const cmpResult = await detectCMP(page);
 
     // Detect GTM
-    scanStore.updateProgress(scanId, 'detecting_cmp', 45, 'Detecting GTM...');
+    onProgress?.('detecting_cmp', 45, 'Detecting GTM...');
     const gtmResult = await detectGTM(page, preConsentRequests as CapturedRequest[]);
 
     // Classify pre-consent requests
@@ -141,11 +146,11 @@ export async function runScan(scanId: string, url: string, options?: ScanOptions
     };
 
     // Phase 3: Accept consent
-    scanStore.updateProgress(scanId, 'accepting_consent', 50, 'Accepting consent...');
+    onProgress?.('accepting_consent', 50, 'Accepting consent...');
     const consentResult = await handleConsent(page);
 
     // Phase 4: Post-consent scan
-    scanStore.updateProgress(scanId, 'scanning_post_consent', 60, 'Reloading page after consent...');
+    onProgress?.('scanning_post_consent', 60, 'Reloading page after consent...');
     const postConsentCapture = new NetworkCapture();
 
     // Wait for dynamic tag firing after consent
@@ -157,7 +162,7 @@ export async function runScan(scanId: string, url: string, options?: ScanOptions
     // Reload page to capture full post-consent behavior
     await resilientReload(page, timeout, 8000);
 
-    scanStore.updateProgress(scanId, 'scanning_post_consent', 75, 'Waiting for post-consent tags...');
+    onProgress?.('scanning_post_consent', 75, 'Waiting for post-consent tags...');
     await page.waitForTimeout(waitAfterLoad);
 
     // Capture screenshot after consent (CMP banner is dismissed)
@@ -170,7 +175,7 @@ export async function runScan(scanId: string, url: string, options?: ScanOptions
     }
 
     // Snapshot post-consent state
-    scanStore.updateProgress(scanId, 'scanning_post_consent', 85, 'Capturing post-consent state...');
+    onProgress?.('scanning_post_consent', 85, 'Capturing post-consent state...');
     const postConsentRequests = postConsentCapture.snapshot();
     const postConsentCookies = await collectCookies(page);
     const postConsentDataLayer = await getDataLayer(page);
@@ -220,13 +225,12 @@ export async function runScan(scanId: string, url: string, options?: ScanOptions
     }
 
     // Phase 5: Analysis
-    scanStore.updateProgress(scanId, 'analyzing', 90, 'Analyzing results...');
+    onProgress?.('analyzing', 90, 'Analyzing results...');
     const analysis = analyzeResults(preConsent, postConsent, {
       pianoConsentModePre,
       pianoConsentModePost,
     });
 
-    const startedAt = scanStore.get(scanId)?.startedAt || Date.now();
     const results: ScanResults = {
       scanId,
       url,
@@ -241,10 +245,7 @@ export async function runScan(scanId: string, url: string, options?: ScanOptions
       analysis,
     };
 
-    scanStore.complete(scanId, results);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error occurred';
-    scanStore.setError(scanId, message);
+    return results;
   } finally {
     if (context) {
       await context.close().catch(() => {});

@@ -16,10 +16,28 @@ import { DataLayerViewer } from '@/components/results/datalayer-viewer';
 import { NetworkRequestsTable } from '@/components/results/network-requests-table';
 import { ArrowLeft, Download } from 'lucide-react';
 import Link from 'next/link';
+import type { ScanResults } from '@/lib/types/scan';
 
-export default function ScanPage({ params }: { params: Promise<{ scanId: string }> }) {
+function downloadJSON(results: ScanResults, scanId: string) {
+  const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `scan-${scanId}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function ScanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ scanId: string }>;
+  searchParams: Promise<{ url?: string }>;
+}) {
   const { scanId } = use(params);
-  const { status, progress, currentStep, results, error } = useSSE(scanId);
+  const { url: scanUrl } = use(searchParams);
+  const { status, progress, currentStep, results, error } = useSSE(scanId, scanUrl ?? null);
   const { t, locale } = useLocale();
 
   if (status !== 'completed' || !results) {
@@ -59,16 +77,14 @@ export default function ScanPage({ params }: { params: Promise<{ scanId: string 
               {t('results.scannedOn')} {new Date(results.scannedAt).toLocaleString(dateLocale)} &mdash; {(results.duration / 1000).toFixed(1)}s
             </p>
           </div>
-          <a
+          <button
             id="export-json-btn"
-            href={`/api/scan/${scanId}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => downloadJSON(results, scanId)}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
           >
             <Download className="h-4 w-4" />
             JSON
-          </a>
+          </button>
         </div>
       </div>
 
