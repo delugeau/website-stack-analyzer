@@ -12,15 +12,9 @@ import { analyzeResults } from '../analysis';
 import type { ScanOptions, ScanResults, ScanStatus, PassResults } from '../types/scan';
 import type { CapturedRequest } from '../types/network';
 
-const isServerless = !!(
-  process.env.NETLIFY ||
-  process.env.AWS_LAMBDA_FUNCTION_NAME ||
-  process.env.LAMBDA_TASK_ROOT
-);
-
-const DEFAULT_WAIT_AFTER_LOAD = isServerless ? 2000 : 5000;
-const DEFAULT_TIMEOUT = isServerless ? 15000 : 60000;
-const WAIT_BEFORE_RELOAD = isServerless ? 1000 : 3000;
+const DEFAULT_WAIT_AFTER_LOAD = 5000;
+const DEFAULT_TIMEOUT = 60000;
+const WAIT_BEFORE_RELOAD = 3000;
 
 /**
  * Resilient page navigation: tries `networkidle` first, falls back to
